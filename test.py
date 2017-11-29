@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 import requests
 import pandas as pd
 
+log = open("log.txt", "w")
+
 class Game:
     def __init__(self, winner, loser, link):
         self.winner = winner
@@ -37,29 +39,40 @@ def getGames(month, day, year):
     return allObjects
     
 def getBox(html, team):
-    if team == 'umbc': team = 'maryland-baltimore-county'
-    if team == 'ucf': team = 'central-florida'
+    global log
+    halt = False
+    nicknames = {
+        'umbc': 'maryland-baltimore-county',
+        'ucf': 'central-florida'
+    }
+    if team in nicknames: team = nicknames[team]
     print 'box-score-basic-' + team
     test = html.find('table', id='box-score-basic-' + team)
-    headers = test.select("thead th")
-    headers = headers[2:]
-    colHeads = []
-    for h in headers: colHeads.append(h.get_text())
-    colHeads = [h.encode("utf-8") for h in colHeads]
-    colHeads[0] = 'Name'
-    df = pd.DataFrame(columns=colHeads)   
-    rows = test.select("tbody tr")
-    rows.remove(rows[5])
-    for row in rows:
-        line = []
-        name = row.select("th")[0].get_text().encode('utf-8')
-        line.append(name)
-        data = row.select('td')
-        for x in data:
-            line.append(x.get_text().encode("utf-8"))
-        series = pd.Series(line,colHeads)
-        df = df.append([series], ignore_index=True)       
-    df.to_csv(team + ".csv")
+    try:
+        test.select("thead th")
+    except AttributeError:
+        log.write("ERROR: Check " + team + '\n')
+        halt = True
+    if not halt:
+        headers = test.select("thead th")
+        headers = headers[2:]
+        colHeads = []
+        for h in headers: colHeads.append(h.get_text())
+        colHeads = [h.encode("utf-8") for h in colHeads]
+        colHeads[0] = 'Name'
+        df = pd.DataFrame(columns=colHeads)   
+        rows = test.select("tbody tr")
+        rows.remove(rows[5])
+        for row in rows:
+            line = []
+            name = row.select("th")[0].get_text().encode('utf-8')
+            line.append(name)
+            data = row.select('td')
+            for x in data:
+                line.append(x.get_text().encode("utf-8"))
+            series = pd.Series(line,colHeads)
+            df = df.append([series], ignore_index=True)       
+        df.to_csv(team + ".csv")
     
 def processGame(game):
     page = requests.get(game.link)
@@ -68,9 +81,11 @@ def processGame(game):
     getBox(html, game.loser)
 
 def main():
+    global log
     games = getGames("11", "23", "2017")
     for game in games:
         processGame(game)
+    log.close()
     """
     page = requests.get("https://www.sports-reference.com/cbb/boxscores/2017-11-23-stanford.html")
     boxSoup = BeautifulSoup(page.content, 'html.parser')
