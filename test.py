@@ -4,6 +4,11 @@ import requests
 import pandas as pd
 
 log = open("log.txt", "w")
+nicknames = {
+    'umbc': 'maryland-baltimore-county',
+    'ucf': 'central-florida',
+    'unlv': 'nevada-las-vegas'
+}
 
 class Game:
     def __init__(self, winner, loser, link):
@@ -41,10 +46,7 @@ def getGames(month, day, year):
 def getBox(html, team):
     global log
     halt = False
-    nicknames = {
-        'umbc': 'maryland-baltimore-county',
-        'ucf': 'central-florida'
-    }
+    
     if team in nicknames: team = nicknames[team]
     print 'box-score-basic-' + team
     test = html.find('table', id='box-score-basic-' + team)
