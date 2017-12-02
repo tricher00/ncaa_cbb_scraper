@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import requests
 import re
 import pandas as pd
+import argparse
 
 log = open("log.txt", "w")
 nicknames = {
@@ -11,13 +12,19 @@ nicknames = {
     'unlv': 'nevada-las-vegas'
 }
 
+def parseArgs():
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('-d', dest='date')
+    return parser.parse_args()
+
 class Game:
-    def __init__(self, winner, loser, link):
-        self.winner = winner
-        self.loser = loser
+    def __init__(self, home, away, link):
+        self.home = home
+        self.away = away
         self.link = link
 
-def getGames(month, day, year):
+def getGames(date):
+    year, month, day = date.split('-')
     url = "https://www.sports-reference.com/cbb/boxscores/index.cgi?month=" + month + "&day=" + day + "&year=" + year
     page = requests.get(url)
     scoreboard = BeautifulSoup(page.content, 'html.parser')
@@ -42,15 +49,19 @@ def getGames(month, day, year):
 
         for ch in ['\'', '(', ')']:
             if ch in winner: winner = winner.replace(ch, '')
-            if ch in loser: winner = winner.replace(ch, '')
+            if ch in loser: loser = loser.replace(ch, '')
         if len(winnerTag) > 1:
             link = "https://www.sports-reference.com" + winnerTag[1]['href'].encode('utf-8')
+            home = winner
+            away = loser
         else:
             link = "https://www.sports-reference.com" + loserTag[1]['href'].encode('utf-8')
+            home = loser
+            away = winner
         allObjects.append(
             Game(
-                winner,
-                loser,
+                home,
+                away,
                 link
             )
         )
@@ -61,7 +72,7 @@ def getBox(html, team):
     
     if team in nicknames: team = nicknames[team]
     
-    print 'box-score-basic-' + team
+    #print 'box-score-basic-' + team
     test = html.find('table', id='box-score-basic-' + team)
     
     try:
@@ -93,12 +104,17 @@ def getBox(html, team):
 def processGame(game):
     page = requests.get(game.link)
     html = BeautifulSoup(page.content, 'html.parser')
-    getBox(html, game.winner)
-    getBox(html, game.loser)
+    #print "Away: " + game.away
+    #print "Home: " + game.home
+    #print
+    getBox(html, game.home)
+    getBox(html, game.away)
 
 def main():
     global log
-    games = getGames("11", "24", "2017")
+    args = parseArgs()
+    date = args.date
+    games = getGames(date)
     for game in games:
         processGame(game)
     log.close()
