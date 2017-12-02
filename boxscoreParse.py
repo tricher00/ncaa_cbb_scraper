@@ -5,24 +5,14 @@ import re
 import pandas as pd
 import argparse
 import datetime
+from Objects import *
 
 log = open("log.txt", "w")
-nicknames = {
-    'umbc': 'maryland-baltimore-county',
-    'ucf': 'central-florida',
-    'unlv': 'nevada-las-vegas'
-}
 
 def parseArgs():
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser()
     parser.add_argument('-d', dest='date')
     return parser.parse_args()
-
-class Game:
-    def __init__(self, home, away, link):
-        self.home = home
-        self.away = away
-        self.link = link
 
 def getGames(date):
     year, month, day = date.split('-')
@@ -38,19 +28,19 @@ def getGames(date):
         try:
             winnerLink = winnerTag[0]['href'].encode('utf-8')
             search = re.search(regex, winnerLink)
-            winner = search.group(1)
+            winner = Team(search.group(1))
         except:
-            winner = winnerTag[0].get_text().replace(' ', '-').lower()
+            winner = Team(winnerTag[0].get_text().replace(' ', '-').lower())
         try:
             loserLink = loserTag[0]['href'].encode('utf-8')
             search = re.search(regex, loserLink)
-            loser = search.group(1)
+            loser = Team(search.group(1))
         except:
-            loser = loserTag[0].get_text().replace(' ', '-').lower()
+            loser = Team(loserTag[0].get_text().replace(' ', '-').lower())
 
         for ch in ['\'', '(', ')']:
-            if ch in winner: winner = winner.replace(ch, '')
-            if ch in loser: loser = loser.replace(ch, '')
+            if ch in winner.name: winner.name = winner.name.replace(ch, '')
+            if ch in loser.name: loser.name = loser.name.replace(ch, '')
         if len(winnerTag) > 1:
             link = "https://www.sports-reference.com" + winnerTag[1]['href'].encode('utf-8')
             home = winner
@@ -59,55 +49,52 @@ def getGames(date):
             link = "https://www.sports-reference.com" + loserTag[1]['href'].encode('utf-8')
             home = loser
             away = winner
-        allObjects.append(
-            Game(
-                home,
-                away,
-                link
-            )
-        )
+        obj = Game(home,away)
+        obj.link = link
+        allObjects.append(obj)
     return allObjects
     
-def getBox(html, team, date):
+def getBox(html, game, date):
     global log
     
-    if team in nicknames: team = nicknames[team]
+    teams = [game.home, game.away]
     
-    test = html.find('table', id='box-score-basic-' + team)
-    
-    try:
-        test.select("thead th")
-    except AttributeError:
-        log.write("ERROR: " + team + " is an incorrect team name" + '\n')
-        return
-    
-    headers = test.select("thead th")
-    headers = headers[2:]
-    colHeads = ['Date']
-    for h in headers: colHeads.append(h.get_text())
-    colHeads = [h.encode("utf-8") for h in colHeads]
-    colHeads[1] = 'Name'
-    for percent in ['FG%', '2P%', '3P%', 'FT%']: colHeads.remove(percent)
-    df = pd.DataFrame(columns=colHeads)   
-    rows = test.select("tbody tr")
-    rows.remove(rows[5])
-    for row in rows:
-        line = []
-        name = row.select("th")[0].get_text().encode('utf-8')
-        line = [datetime.datetime.strptime(date, "%Y-%m-%d").date(),name]
-        data = row.select('td')
-        for x in data:
-            if not '_pct' in x['data-stat']:
-                line.append(x.get_text().encode("utf-8"))
-        series = pd.Series(line,colHeads)
-        df = df.append([series], ignore_index=True)       
-    df.to_csv("csv/" + date + "-" + team + ".csv")
+    for team in teams:
+        test = html.find('table', id='box-score-basic-' + team.name)
+        if team.isHome: opponent = game.away.name
+        else: opponent = game.home.name
+        try:
+            test.select("thead th")
+        except AttributeError:
+            log.write("ERROR: " + team.name + " is an incorrect team name" + '\n')
+            return
+        
+        headers = test.select("thead th")
+        headers = headers[2:]
+        colHeads = ['Date', 'Opponent']
+        for h in headers: colHeads.append(h.get_text())
+        colHeads = [h.encode("utf-8") for h in colHeads]
+        colHeads[2] = 'Name'
+        for percent in ['FG%', '2P%', '3P%', 'FT%']: colHeads.remove(percent)
+        df = pd.DataFrame(columns=colHeads)   
+        rows = test.select("tbody tr")
+        rows.remove(rows[5])
+        for row in rows:
+            name = row.select("th")[0].get_text().encode('utf-8')
+            line = [datetime.datetime.strptime(date, "%Y-%m-%d").date(), opponent, name]
+            data = row.select('td')
+            for x in data:
+                if not '_pct' in x['data-stat']:
+                    line.append(x.get_text().encode("utf-8"))
+            series = pd.Series(line,colHeads)
+            df = df.append([series], ignore_index=True)
+        team.box = df
+        #df.to_csv("csv/" + date + "-" + team.name + ".csv")
     
 def processGame(game, date):
     page = requests.get(game.link)
     html = BeautifulSoup(page.content, 'html.parser')
-    getBox(html, game.home, date)
-    getBox(html, game.away, date)
+    getBox(html, game, date)
 
 def main():
     global log

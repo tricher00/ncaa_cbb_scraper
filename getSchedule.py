@@ -4,16 +4,12 @@ import requests
 import re
 import pandas as pd
 import argparse
+from Objects import *
 
 log = open("log.txt", "w")
-
-class Game:
-    def __init__(self, home, away):
-        self.home = home
-        self.away = away
         
 def parseArgs():
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser()
     parser.add_argument('-d', dest='date')
     return parser.parse_args()
 
@@ -33,19 +29,19 @@ def getGames(date):
         try:
             homeLink = homeTag['href'].encode('utf-8')
             search = re.search(regex, homeLink)
-            home = search.group(1)
+            home = Team(search.group(1))
         except:
-            home = homeTag.get_text().replace(' ', '-').lower()
+            home = Team(homeTag.get_text().replace(' ', '-').lower())
         try:
             awayLink = awayTag['href'].encode('utf-8')
             search = re.search(regex, awayLink)
-            away = search.group(1)
+            away = Team(search.group(1))
         except:
-            away = awayTag.get_text().replace(' ', '-').lower()
+            away = Team(awayTag.get_text().replace(' ', '-').lower())
 
         for ch in ['\'', '(', ')']:
-            if ch in home: home = home.replace(ch, '')
-            if ch in away: away = away.replace(ch, '')
+            if ch in home.name: home.name = home.name.replace(ch, '')
+            if ch in away.name: away.name = away.name.replace(ch, '')
 
         allObjects.append(
             Game(
@@ -61,8 +57,8 @@ def main():
     date = args.date
     games = getGames(date)
     for game in games:
-        print "Away: " + game.away
-        print "Home: " + game.home
+        print "Away: " + game.away.name
+        print "Home: " + game.home.name
         print
     log.close()
         
