@@ -101,7 +101,7 @@ def getBox(html, team, date):
                 line.append(x.get_text().encode("utf-8"))
         series = pd.Series(line,colHeads)
         df = df.append([series], ignore_index=True)       
-    df.to_csv("csv/" + team + ".csv")
+    df.to_csv("csv/" + date + "-" + team + ".csv")
     
 def processGame(game, date):
     page = requests.get(game.link)
