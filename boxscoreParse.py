@@ -4,6 +4,7 @@ import requests
 import re
 import pandas as pd
 import argparse
+import datetime
 
 log = open("log.txt", "w")
 nicknames = {
@@ -67,12 +68,11 @@ def getGames(date):
         )
     return allObjects
     
-def getBox(html, team):
+def getBox(html, team, date):
     global log
     
     if team in nicknames: team = nicknames[team]
     
-    #print 'box-score-basic-' + team
     test = html.find('table', id='box-score-basic-' + team)
     
     try:
@@ -83,32 +83,31 @@ def getBox(html, team):
     
     headers = test.select("thead th")
     headers = headers[2:]
-    colHeads = []
+    colHeads = ['Date']
     for h in headers: colHeads.append(h.get_text())
     colHeads = [h.encode("utf-8") for h in colHeads]
-    colHeads[0] = 'Name'
+    colHeads[1] = 'Name'
+    for percent in ['FG%', '2P%', '3P%', 'FT%']: colHeads.remove(percent)
     df = pd.DataFrame(columns=colHeads)   
     rows = test.select("tbody tr")
     rows.remove(rows[5])
     for row in rows:
         line = []
         name = row.select("th")[0].get_text().encode('utf-8')
-        line.append(name)
+        line = [datetime.datetime.strptime(date, "%Y-%m-%d").date(),name]
         data = row.select('td')
         for x in data:
-            line.append(x.get_text().encode("utf-8"))
+            if not '_pct' in x['data-stat']:
+                line.append(x.get_text().encode("utf-8"))
         series = pd.Series(line,colHeads)
         df = df.append([series], ignore_index=True)       
     df.to_csv("csv/" + team + ".csv")
     
-def processGame(game):
+def processGame(game, date):
     page = requests.get(game.link)
     html = BeautifulSoup(page.content, 'html.parser')
-    #print "Away: " + game.away
-    #print "Home: " + game.home
-    #print
-    getBox(html, game.home)
-    getBox(html, game.away)
+    getBox(html, game.home, date)
+    getBox(html, game.away, date)
 
 def main():
     global log
@@ -116,7 +115,7 @@ def main():
     date = args.date
     games = getGames(date)
     for game in games:
-        processGame(game)
+        processGame(game, date)
     log.close()
         
 if __name__ == "__main__": main()
