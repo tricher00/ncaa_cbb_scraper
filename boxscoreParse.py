@@ -90,6 +90,7 @@ def getBox(html, game, date):
             df = df.append([series], ignore_index=True)
         team.box = df
         #df.to_csv("csv/" + date + "-" + team.name + ".csv")
+    return game
     
 def processGame(game, date):
     page = requests.get(game.link)
@@ -102,7 +103,8 @@ def main():
     date = args.date
     games = getGames(date)
     for game in games:
-        processGame(game, date)
+        game = processGame(game, date)
+    print(games[0].home.box)
     log.close()
         
 if __name__ == "__main__": main()
