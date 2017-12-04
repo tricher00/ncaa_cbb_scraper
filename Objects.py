@@ -1,7 +1,7 @@
 class Game:
     def __init__(self, home, away):
         self.home = home
-        home.isHome = True
+        self.home.isHome = True
         self.away = away
         self.link = None
         

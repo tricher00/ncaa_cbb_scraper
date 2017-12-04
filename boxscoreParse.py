@@ -6,12 +6,14 @@ import pandas as pd
 import argparse
 import datetime
 from Objects import *
+from sqlStuff import *
 
 log = open("log.txt", "w")
 
 def parseArgs():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', dest='date')
+    parser.add_argument('-s', dest='start')
+    parser.add_argument('-e', dest='end')
     return parser.parse_args()
 
 def getGames(date):
@@ -38,9 +40,11 @@ def getGames(date):
         except:
             loser = Team(loserTag[0].get_text().replace(' ', '-').lower())
 
-        for ch in ['\'', '(', ')']:
+        for ch in ['\'', '(', ')', '&', '.']:
             if ch in winner.name: winner.name = winner.name.replace(ch, '')
             if ch in loser.name: loser.name = loser.name.replace(ch, '')
+        if '--' in winner.name: winner.name = winner.name.replace('--', '-')
+        if '--' in loser.name: loser.name = loser.name.replace('--', '-')
         if len(winnerTag) > 1:
             link = "https://www.sports-reference.com" + winnerTag[1]['href'].encode('utf-8')
             home = winner
@@ -56,32 +60,36 @@ def getGames(date):
     
 def getBox(html, game, date):
     global log
-    
+    colHeads = []
     teams = [game.home, game.away]
     
     for team in teams:
         test = html.find('table', id='box-score-basic-' + team.name)
-        if team.isHome: opponent = game.away.name
-        else: opponent = game.home.name
+        if team.isHome: 
+            opponent = game.away.name
+            location = 'Home'
+        else: 
+            opponent = game.home.name
+            location = 'Away'
         try:
             test.select("thead th")
         except AttributeError:
             log.write("ERROR: " + team.name + " is an incorrect team name" + '\n')
-            return
+            continue
         
         headers = test.select("thead th")
         headers = headers[2:]
-        colHeads = ['Date', 'Opponent']
+        colHeads = ['Date', 'Team', 'Opponent', 'Location']
         for h in headers: colHeads.append(h.get_text())
         colHeads = [h.encode("utf-8") for h in colHeads]
-        colHeads[2] = 'Name'
+        colHeads[4] = 'Name'
         for percent in ['FG%', '2P%', '3P%', 'FT%']: colHeads.remove(percent)
         df = pd.DataFrame(columns=colHeads)   
         rows = test.select("tbody tr")
         rows.remove(rows[5])
         for row in rows:
             name = row.select("th")[0].get_text().encode('utf-8')
-            line = [datetime.datetime.strptime(date, "%Y-%m-%d").date(), opponent, name]
+            line = [datetime.datetime.strptime(date, "%Y-%m-%d").date(), team.name , opponent, location, name]
             data = row.select('td')
             for x in data:
                 if not '_pct' in x['data-stat']:
@@ -93,19 +101,77 @@ def getBox(html, game, date):
     return game
     
 def processGame(game, date):
+    print "Processing " + game.away.name + " vs. " + game.home.name
     page = requests.get(game.link)
     html = BeautifulSoup(page.content, 'html.parser')
-    getBox(html, game, date)
+    return getBox(html, game, date)
+    
+def insertToDb(game):
+    print "Inserting " + game.away.name + " vs. " + game.home.name
+    homeLines = []
+    awayLines = []
+    try:
+        homeLines = game.home.box.values.tolist()
+    except:
+        log.write("ERROR: " + game.home.name + " doesn't have box score" + '\n')
+    try:
+        awayLines = game.away.box.values.tolist()
+    except:
+        log.write("ERROR: " + game.away.name + " doesn't have box score" + '\n')
+    
+    lines = homeLines + awayLines
+    
+    for line in lines:
+        insertGameLine(line)
+        
+def incrementDate(date):
+    year, month, day = date.split('-')
+    endDay = {
+        '01':'31',
+        '02':'28',
+        '03':'31',
+        '04':'30',
+        '05':'31',
+        '06':'30',
+        '07':'31',
+        '08':'31',
+        '09':'30',
+        '10':'31',
+        '11':'30',
+        '12':'31'
+    }
+    if int(year) % 4 == 0:
+        endDay['2'] = '29'
+    day = str(int(day) + 1)
+    if int(day) > int(endDay[month]):
+        day = '01'
+        if month == '12':
+            month = '01'
+            year = str(int(year) + 1)
+        else:
+            month = str(int(month) + 1)
+    if len(day) == 1:
+        day = '0' + day
+    if len(month) == 1:
+        month = '0' + month
+    return year + '-' + month + '-' + day
 
 def main():
-    global log
     args = parseArgs()
-    date = args.date
-    games = getGames(date)
-    for game in games:
-        game = processGame(game, date)
-    print(games[0].home.box)
+    start = args.start
+    end = args.end
+    currYear, currMonth, currDay = start.split('-')
+    endYear, endMonth, endDay = end.split('-')
+    date = start
+    while int(currYear) <= int(endYear) and int(currMonth) <= int(endMonth) and int(currDay) <= int(endDay):
+        print date
+        games = getGames(date)
+        for game in games:
+            game = processGame(game, date)
+        for game in games:
+            insertToDb(game)
+        date = incrementDate(date)
+        currYear, currMonth, currDay = date.split('-')
     log.close()
         
-if __name__ == "__main__": main()
-                
+if __name__ == "__main__": main()    
