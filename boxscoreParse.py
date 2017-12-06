@@ -33,6 +33,7 @@ def getGames(date):
             winner = Team(search.group(1))
         except:
             winner = Team(winnerTag[0].get_text().replace(' ', '-').lower())
+  
         try:
             loserLink = loserTag[0]['href'].encode('utf-8')
             search = re.search(regex, loserLink)
@@ -83,6 +84,7 @@ def getBox(html, game, date):
         for h in headers: colHeads.append(h.get_text())
         colHeads = [h.encode("utf-8") for h in colHeads]
         colHeads[4] = 'Name'
+        colHeads.append('Coolness')
         for percent in ['FG%', '2P%', '3P%', 'FT%']: colHeads.remove(percent)
         df = pd.DataFrame(columns=colHeads)   
         rows = test.select("tbody tr")
@@ -94,11 +96,102 @@ def getBox(html, game, date):
             for x in data:
                 if not '_pct' in x['data-stat']:
                     line.append(x.get_text().encode("utf-8"))
+            coolness = getCoolness(line)
+            line.append(coolness)
             series = pd.Series(line,colHeads)
             df = df.append([series], ignore_index=True)
         team.box = df
         #df.to_csv("csv/" + date + "-" + team.name + ".csv")
     return game
+    
+def getCoolness(line):
+    mins = float(line[5])
+    fg_made = float(line[6])
+    fg_attempt = float(line[7])
+    two_made = float(line[8])
+    two_attempt = float(line[9])
+    three_made = float(line[10])
+    three_attempt = float(line[11])
+    ft_made = float(line[12])
+    ft_attempt = float(line[13])
+    orb = float(line[14])
+    drb = float(line[15])
+    trb = float(line[16])
+    ast = float(line[17])
+    stl = float(line[18])
+    blk = float(line[19])
+    tov = float(line[20])
+    pf = float(line[21])
+    pts = float(line[22])
+    
+    coolness = 0
+    
+    if pts >= 10:
+        coolness += 1
+    if pts >= 20:
+        coolness += 1
+    if pts >= 25:
+        coolness += 1
+    if pts >= 30:
+        coolness += 1
+    if pts >= 35:
+        coolness += 1
+    if pts >= 40:
+        coolness += 1
+    if trb >= 8:
+        coolness += 1
+    if trb >= 10:
+        coolness += 1
+    if trb >= 12:
+        coolness += 1
+    if trb >= 15:
+        coolness += 1
+    if orb >= 5:
+        coolness += 1
+    if ast >= 8:
+        coolness += 1
+    if ast >= 10:
+        coolness += 1
+    if ast >= 12:
+        coolness += 1
+    if ast >= 15:
+        coolness += 1
+    if blk >= 2:
+        coolness += 1
+    if blk >= 3:
+        coolness += 1
+    if blk >= 4:
+        coolness += 1
+    if blk >= 5:
+        coolness += 1
+    if stl >= 3:
+        coolness += 1
+    if stl >= 5:
+        coolness += 1
+    if ft_attempt > 0:
+        if ft_attempt == ft_made and ft_attempt >= 5:
+            coolness += 1
+        if ft_made/ft_attempt >= .8 and ft_attempt >= 8:
+            coolness += 1
+    if fg_attempt > 0:
+        if fg_attempt >= 10 and fg_made/fg_attempt >= .5:
+            coolness += 1
+        if fg_attempt >= 10 and fg_made/fg_attempt >= .75:
+            coolness += 1
+        if fg_attempt >= 10 and fg_made/fg_attempt >= .80:
+            coolness += 1
+        if fg_attempt >= 10 and fg_made/fg_attempt >= .90:
+            coolness += 1
+        if fg_attempt >= 10 and fg_made == fg_attempt:
+            coolness += 1
+        if three_attempt > 0:
+            if three_attempt >= 5 and three_made/three_attempt >= .5:
+                coolness += 1
+            if three_attempt >= 5 and three_made == three_attempt:
+                coolness += 1
+        
+    return coolness
+    
     
 def processGame(game, date):
     print "Processing " + game.away.name + " vs. " + game.home.name
@@ -164,8 +257,8 @@ def main():
     endYear, endMonth, endDay = end.split('-')
     date = start
     while int(currYear) <= int(endYear) and int(currMonth) <= int(endMonth) and int(currDay) <= int(endDay):
-        print date
         games = getGames(date)
+        games = [games[0]]
         for game in games:
             game = processGame(game, date)
         for game in games:
