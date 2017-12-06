@@ -1,6 +1,6 @@
 import sqlite3 as sql
 
-db = "testDB.db"
+db = "cbb_17_18.db"
 
 def getTeamId(teamName):
     conn = sql.connect(db)
@@ -28,14 +28,14 @@ def getPlayerId(playerName, teamId):
     
     var = (playerName, teamId)
     
-    c.execute("SELECT id FROM player WHERE name = ? AND teamid = ?", var)
+    c.execute("SELECT id FROM player WHERE name = ? AND team_id = ?", var)
     
     temp = c.fetchone()
     
     if temp == None:
-        c.execute("INSERT INTO player (name, teamId) VALUES (?,?)", var)
+        c.execute("INSERT INTO player (name, team_id) VALUES (?,?)", var)
         conn.commit()
-        c.execute("SELECT id FROM player WHERE name = ? AND teamid = ?", var)
+        c.execute("SELECT id FROM player WHERE name = ? AND team_id = ?", var)
         temp = c.fetchone()    
     
     conn.close()

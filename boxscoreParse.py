@@ -258,7 +258,6 @@ def main():
     date = start
     while int(currYear) <= int(endYear) and int(currMonth) <= int(endMonth) and int(currDay) <= int(endDay):
         games = getGames(date)
-        games = [games[0]]
         for game in games:
             game = processGame(game, date)
         for game in games:
