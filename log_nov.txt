@@ -1,0 +1,34 @@
+ERROR: bob-jones-university is an incorrect team name
+ERROR: mit is an incorrect team name
+ERROR: ccny is an incorrect team name
+ERROR: missouri-baptist-university is an incorrect team name
+ERROR: uc-santa-cruz is an incorrect team name
+ERROR: bob-jones-university doesn't have box score
+ERROR: mit doesn't have box score
+ERROR: ccny doesn't have box score
+ERROR: missouri-baptist-university doesn't have box score
+ERROR: uc-santa-cruz doesn't have box score
+ERROR: embry-riddle-aeronautical-university is an incorrect team name
+ERROR: embry-riddle-aeronautical-university doesn't have box score
+ERROR: lemoyne-owen is an incorrect team name
+ERROR: lemoyne-owen doesn't have box score
+ERROR: penn-st--brandywine is an incorrect team name
+ERROR: bob-jones-university is an incorrect team name
+ERROR: bethesda-university-ca is an incorrect team name
+ERROR: calvary is an incorrect team name
+ERROR: penn-st--brandywine doesn't have box score
+ERROR: bob-jones-university doesn't have box score
+ERROR: bethesda-university-ca doesn't have box score
+ERROR: calvary doesn't have box score
+ERROR: benedictine is an incorrect team name
+ERROR: benedictine doesn't have box score
+ERROR: missouri-st; is an incorrect team name
+ERROR: missouri-st; doesn't have box score
+ERROR: florida-national-university is an incorrect team name
+ERROR: bethesda-university-ca is an incorrect team name
+ERROR: florida-national-university doesn't have box score
+ERROR: bethesda-university-ca doesn't have box score
+ERROR:  is an incorrect team name
+ERROR: texas-san-antonio is an incorrect team name
+ERROR:  doesn't have box score
+ERROR: texas-san-antonio doesn't have box score

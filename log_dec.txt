@@ -1,0 +1,2 @@
+ERROR: bethesda-university-ca is an incorrect team name
+ERROR: bethesda-university-ca doesn't have box score
