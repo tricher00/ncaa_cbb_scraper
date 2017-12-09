@@ -82,6 +82,13 @@ def getTeamPage(teamName):
     temp = c.fetchall()
 
     players = [x[0].encode("utf-8") for x in temp]
+    
+    lines = [None] * len(players)
+    
+    for i in range(len(players)):
+        lines[i] = getPlayerLine(players[i])
+        
+    return pd.concat(lines)
     #TODO: Get player line for all players
 
     
