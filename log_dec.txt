@@ -1,2 +1,4 @@
 ERROR: bethesda-university-ca is an incorrect team name
 ERROR: bethesda-university-ca doesn't have box score
+ERROR: concorida-ne is an incorrect team name
+ERROR: concorida-ne doesn't have box score
