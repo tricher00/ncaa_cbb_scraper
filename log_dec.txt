@@ -2,3 +2,11 @@ ERROR: bethesda-university-ca is an incorrect team name
 ERROR: bethesda-university-ca doesn't have box score
 ERROR: concorida-ne is an incorrect team name
 ERROR: concorida-ne doesn't have box score
+ERROR: florida-national-university is an incorrect team name
+ERROR: florida-national-university doesn't have box score
+ERROR: bethesda-university-ca is an incorrect team name
+ERROR: bethesda-university-ca doesn't have box score
+ERROR: thomas-university is an incorrect team name
+ERROR: simon-fraser-university is an incorrect team name
+ERROR: thomas-university doesn't have box score
+ERROR: simon-fraser-university doesn't have box score
