@@ -8,7 +8,7 @@ import datetime
 from Objects import *
 from sqlStuff import *
 
-log = open("log.txt", "w")
+#log = open("log.txt", "w")
 
 def parseArgs():
     parser = argparse.ArgumentParser()
@@ -247,23 +247,4 @@ def incrementDate(date):
         day = '0' + day
     if len(month) == 1:
         month = '0' + month
-    return year + '-' + month + '-' + day
-
-def main():
-    args = parseArgs()
-    start = args.start
-    end = args.end
-    currYear, currMonth, currDay = start.split('-')
-    endYear, endMonth, endDay = end.split('-')
-    date = start
-    while int(currYear) <= int(endYear) and int(currMonth) <= int(endMonth) and int(currDay) <= int(endDay):
-        games = getGames(date)
-        for game in games:
-            game = processGame(game, date)
-        for game in games:
-            insertToDb(game)
-        date = incrementDate(date)
-        currYear, currMonth, currDay = date.split('-')
-    log.close()
-        
-if __name__ == "__main__": main()    
+    return year + '-' + month + '-' + day   

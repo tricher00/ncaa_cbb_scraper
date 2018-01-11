@@ -6,7 +6,7 @@ import pandas as pd
 import argparse
 from Objects import *
 
-log = open("log.txt", "w")
+#log = open("log.txt", "w")
         
 def parseArgs():
     parser = argparse.ArgumentParser()
@@ -50,16 +50,3 @@ def getGames(date):
             )
         )
     return allObjects
-
-def main():
-    global log
-    args = parseArgs()
-    date = args.date
-    games = getGames(date)
-    for game in games:
-        print "Away: " + game.away.name
-        print "Home: " + game.home.name
-        print
-    log.close()
-        
-if __name__ == "__main__": main()

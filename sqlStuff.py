@@ -1,5 +1,6 @@
 import sqlite3 as sql
 import pandas as pd
+import string
 
 db = "cbb_17_18.db"
 
@@ -7,7 +8,6 @@ def getTeamId(teamName):
     conn = sql.connect(db)
     c = conn.cursor()
     
-    teamName = teamName.lower()
     var = (teamName,)
     
     c.execute("SELECT id FROM team WHERE name = ?", var)
@@ -26,7 +26,7 @@ def getTeamId(teamName):
 def getPlayerId(playerName, teamId):
     conn = sql.connect(db)
     c = conn.cursor()
-    
+        
     var = (playerName, teamId)
     
     c.execute("SELECT id FROM player WHERE name = ? AND team_id = ?", var)
@@ -61,6 +61,8 @@ def insertGameLine(line):
 def getPlayerLine(playerName):
     conn = sql.connect(db)
     c = conn.cursor()
+
+    playerName = string.capwords(playerName)
     
     var = (playerName,)
     
@@ -106,6 +108,8 @@ def getSimplePlayerLine(playerName):
     conn = sql.connect(db)
     c = conn.cursor()
     
+    playerName = string.capwords(playerName)
+
     var = (playerName,)
     
     queryList = [
@@ -141,6 +145,9 @@ def getSimplePlayerLine(playerName):
 def getTeamPage(teamName):
     conn = sql.connect(db)
     c = conn.cursor()
+    
+    teamName = teamName.lower()
+    teamName = teamName.replace(' ', '-')
     
     colNames = ['Player', 'Games', 'MPG', 'PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TPG', 'FG%', '2P%', '3P%', 'FT%']
 
