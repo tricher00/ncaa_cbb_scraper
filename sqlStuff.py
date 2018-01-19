@@ -68,6 +68,7 @@ def getPlayerLine(playerName):
     
     queryList = [
         "SELECT player.name as Player, ",
+        "team.name as School, "
         "CAST(Count(*) as float) as Games, ",
         "SUM(minutes) / CAST(Count(*) as float) as MPG, ",
         "SUM(pts) / CAST(Count(*) as float) as PPG, ",
@@ -90,7 +91,9 @@ def getPlayerLine(playerName):
         "SUM(trb) as TRB, ",
         "SUM(coolness) as Coolness ",
         "FROM game_line ",
-        "INNER JOIN player  ON player.id = game_line.player_id  WHERE player.name = ?;"
+        "INNER JOIN team ON team.id = game_line.team_id ",
+        "INNER JOIN player ON player.id = game_line.player_id WHERE player.name = ?;",
+        
     ]
     
     query = ""
@@ -100,7 +103,9 @@ def getPlayerLine(playerName):
     c.execute(query, var)
     temp = c.fetchone()
     
-    colNames = ['Player', 'Games', 'MPG', 'PPG', 'APG', 'ORPG', 'DRPG', 'RPG', 'SPG', 'BPG', 'TPG', 'CPG', 'FG%', '2P%', '3P%', 'FT%', 'Points', 'Asists', 'ORB', 'DRB', 'TRB', 'Coolness']
+    colNames = ['Player', 'School', 'Games', 'MPG', 'PPG', 'APG', 'ORPG', 'DRPG', 'RPG', 'SPG', 'BPG', 'TPG', 'CPG', 'FG%', '2P%', '3P%', 'FT%', 'Points', 'Asists', 'ORB', 'DRB', 'TRB', 'Coolness']
+    
+    conn.close()
     
     return pd.Series(temp, colNames)
     
@@ -114,6 +119,7 @@ def getSimplePlayerLine(playerName):
     
     queryList = [
         "SELECT player.name as Player, ",
+        "team.name as School, ",
         "CAST(Count(*) as float) as Games, ",
         "SUM(minutes) / CAST(Count(*) as float) as MPG, ",
         "SUM(pts) / CAST(Count(*) as float) as PPG, ",
@@ -127,6 +133,7 @@ def getSimplePlayerLine(playerName):
         "SUM(three_made) / CAST(SUM(three_attempt) as float) as '3P%', ",
         "SUM(ft_made) / CAST(SUM(ft_attempt) as float) as 'FT%' ",
         "FROM game_line ",
+        "INNER JOIN team ON team.id = game_line.team_id ",
         "INNER JOIN player ON player.id = game_line.player_id  WHERE player.name = ?;"
     ]
     
@@ -137,7 +144,9 @@ def getSimplePlayerLine(playerName):
     c.execute(query, var)
     temp = c.fetchone()
     
-    colNames = ['Player', 'Games', 'MPG', 'PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TPG', 'FG%', '2P%', '3P%', 'FT%']
+    colNames = ['Player', 'School', 'Games', 'MPG', 'PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TPG', 'FG%', '2P%', '3P%', 'FT%']
+    
+    conn.close()
     
     return pd.Series(temp, colNames)
     
@@ -166,4 +175,54 @@ def getTeamPage(teamName):
     for player in players:
         page = page.append(getSimplePlayerLine(player), ignore_index = True)
         
-    return page   
+    conn.close()    
+        
+    return page
+
+def getLeaderboard(stat):
+    conn = sql.connect(db)
+    c = conn.cursor()
+    
+    statQuery = {
+        "Coolness" : "SUM(coolness)",
+        "CPG" : "SUM(coolness)/Cast(COUNT(*) as float)",
+        "PPG" : "SUM(pts)/Cast(COUNT(*) as float)"
+    }
+    
+    query = ""
+    
+    queryList = [
+        "SELECT player.name as Player, ",
+        "team.name as Team, "
+        "CASE WHEN CAST(Count(*) as float) >= 10 THEN {} END as stat ".format(statQuery[stat]),
+        "FROM game_line ",
+        "INNER JOIN player ON player.id = game_line.player_id ",
+        "INNER JOIN team ON team.id = game_line.team_id ",
+        "GROUP BY player_id ",
+        "ORDER by stat DESC ",
+        "LIMIT 10;"
+    ]
+    
+    for x in queryList: query += x
+    
+    c.execute(query)
+    
+    result = c.fetchall()
+    
+    players = [x[0].encode("utf-8") for x in result]
+    teams = [x[1].encode("utf-8") for x in result]
+    stats = [x[2] for x in result]
+    
+    board = pd.DataFrame(
+        {
+            'Player': players,
+            'Team': teams,
+            stat: stats
+        }
+    )
+    
+    board = board[[u'Player', u'Team', stat]]
+    
+    conn.close()
+    
+    return board

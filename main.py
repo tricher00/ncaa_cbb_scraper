@@ -88,14 +88,18 @@ def getPlayer():
 def getTeam():
     team = raw_input("Team Name: ")
     print getTeamPage(team)
+    
+def leaderboard():
+    stat = raw_input("Please enter a stat: ")
+    print getLeaderboard(stat)
 
 def main():
-    log = open("log.txt", "w")
     print "What would like to do?"
     print "U: Update Database"
     print "S: Get Schedule"
     print "P: Get Player Line"
     print "T: Get Team Page"
+    print "L: Get Leaderboard"
     
     var = raw_input()
     
@@ -105,9 +109,8 @@ def main():
     elif var == 'S' : schedule()
     elif var == 'P' : getPlayer()
     elif var == 'T' : getTeam()
+    elif var == 'L' : leaderboard()
     else: print "Please enter a valid input"
-    
-    log.close()
-        
+            
 if __name__ == "__main__": main()    
     
