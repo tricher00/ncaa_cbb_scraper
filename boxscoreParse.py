@@ -1,14 +1,10 @@
-#import sys
 from bs4 import BeautifulSoup
 import requests
 import re
 import pandas as pd
-import argparse
 import datetime
 from Objects import *
 from sqlStuff import *
-
-#log = open("log.txt", "w")
 
 def parseArgs():
     parser = argparse.ArgumentParser()
@@ -16,7 +12,7 @@ def parseArgs():
     parser.add_argument('-e', dest='end')
     return parser.parse_args()
 
-def getGames(date):
+def getGames(date):    
     year, month, day = date.split('-')
     url = "https://www.sports-reference.com/cbb/boxscores/index.cgi?month=" + month + "&day=" + day + "&year=" + year
     page = requests.get(url)
@@ -60,7 +56,7 @@ def getGames(date):
     return allObjects
     
 def getBox(html, game, date):
-    global log
+    log = open("log.txt", "w")
     colHeads = []
     teams = [game.home, game.away]
     
@@ -101,7 +97,7 @@ def getBox(html, game, date):
             series = pd.Series(line,colHeads)
             df = df.append([series], ignore_index=True)
         team.box = df
-        #df.to_csv("csv/" + date + "-" + team.name + ".csv")
+    log.close()
     return game
     
 def getCoolness(line):
@@ -203,14 +199,10 @@ def insertToDb(game):
     print "Inserting " + game.away.name + " vs. " + game.home.name
     homeLines = []
     awayLines = []
-    try:
-        homeLines = game.home.box.values.tolist()
-    except:
-        log.write("ERROR: " + game.home.name + " doesn't have box score" + '\n')
-    try:
-        awayLines = game.away.box.values.tolist()
-    except:
-        log.write("ERROR: " + game.away.name + " doesn't have box score" + '\n')
+    try: homeLines = game.home.box.values.tolist()
+    except: None
+    try: awayLines = game.away.box.values.tolist()
+    except: None
     
     lines = homeLines + awayLines
     

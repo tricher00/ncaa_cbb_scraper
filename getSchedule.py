@@ -1,19 +1,12 @@
-#import sys
 from bs4 import BeautifulSoup
 import requests
 import re
 import pandas as pd
-import argparse
 from Objects import *
 
-#log = open("log.txt", "w")
-        
-def parseArgs():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-d', dest='date')
-    return parser.parse_args()
-
 def getGames(date):
+    log = open("log.txt", "w")
+    
     year, month, day = date.split('-')
     url = "https://www.sports-reference.com/cbb/boxscores/index.cgi?month=" + month + "&day=" + day + "&year=" + year
     page = requests.get(url)
@@ -49,4 +42,5 @@ def getGames(date):
                 away
             )
         )
+    log.close()
     return allObjects
