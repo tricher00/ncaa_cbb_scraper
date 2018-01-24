@@ -91,7 +91,8 @@ def getTeam():
     
 def leaderboard():
     stat = raw_input("Please enter a stat: ")
-    print getLeaderboard(stat)
+    limit = raw_input("How many players would you like to see?: ")
+    print getLeaderboard(stat, limit)
 
 def main():
     print "What would like to do?"

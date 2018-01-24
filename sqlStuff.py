@@ -58,7 +58,7 @@ def insertGameLine(line):
     conn.commit()
     conn.close()
     
-def getPlayerLine(playerName):
+def getPlayerLine(playerName, school = None):
     conn = sql.connect(db)
     c = conn.cursor()
 
@@ -107,9 +107,9 @@ def getPlayerLine(playerName):
     
     conn.close()
     
-    return pd.Series(temp, colNames)
+    return pd.Series(temp, colNames).round(2)
     
-def getSimplePlayerLine(playerName):
+def getSimplePlayerLine(playerName, school = None):
     conn = sql.connect(db)
     c = conn.cursor()
     
@@ -133,7 +133,7 @@ def getSimplePlayerLine(playerName):
         "SUM(three_made) / CAST(SUM(three_attempt) as float) as '3P%', ",
         "SUM(ft_made) / CAST(SUM(ft_attempt) as float) as 'FT%' ",
         "FROM game_line ",
-        "INNER JOIN team ON team.id = game_line.team_id ",
+        "INNER JOIN team ON team.id = player.team_id ",
         "INNER JOIN player ON player.id = game_line.player_id  WHERE player.name = ?;"
     ]
     
@@ -142,7 +142,18 @@ def getSimplePlayerLine(playerName):
     for x in queryList: query += x
     
     c.execute(query, var)
-    temp = c.fetchone()
+    temp = c.fetchall()
+    
+    print temp
+    
+    if len(temp) == 1: 
+        temp = temp[0]
+    else:
+        if school == None:
+            schools = [x[1] for x in temp]
+            print "There are multiple players named {} please enter the school name of the player you're looking for:".format(playerName)
+            for y in schools:
+                print "- {}".format(y)
     
     colNames = ['Player', 'School', 'Games', 'MPG', 'PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TPG', 'FG%', '2P%', '3P%', 'FT%']
     
@@ -159,35 +170,65 @@ def getTeamPage(teamName):
     teamName = teamName.replace(' ', '-')
     
     colNames = ['Player', 'Games', 'MPG', 'PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TPG', 'FG%', '2P%', '3P%', 'FT%']
-
-    page = pd.DataFrame(columns = colNames)
     
     var = (teamName, )
-
-    c.execute("SELECT player.name FROM player INNER JOIN team ON team.id = player.team_id WHERE team.name = ?" , var)
+    
+    queryList = [
+        "SELECT player.name as Player, ",
+        "CAST(Count(*) as float) as Games, ",
+        "SUM(minutes) / CAST(Count(*) as float) as MPG, ",
+        "SUM(pts) / CAST(Count(*) as float) as PPG, ",
+        "SUM(ast) / CAST(Count(*) as float) as APG, ",
+        "SUM(trb) / CAST(Count(*) as float) as RPG, ",
+        "SUM(stl) / CAST(Count(*) as float) as SPG, ",
+        "SUM(blk) / CAST(Count(*) as float) as BPG, ",
+        "SUM(tov) / CAST(Count(*) as float) as TPG, ",
+        "SUM(fg_made) / CAST(SUM(fg_attempt) as float) as 'FG%', ",
+        "SUM(two_made) / CAST(SUM(two_attempt) as float) as '2P%', ",
+        "SUM(three_made) / CAST(SUM(three_attempt) as float) as '3P%', ",
+        "SUM(ft_made) / CAST(SUM(ft_attempt) as float) as 'FT%' ",
+        "FROM game_line ",
+        "INNER JOIN team ON team.id = player.team_id ",
+        "INNER JOIN player ON player.id = game_line.player_id WHERE team.name = ? "
+        "GROUP BY player_id;"
+    ]
+    
+    query = ""
+    
+    for x in queryList: query += x
+    
+    c.execute(query , var)
 
     temp = c.fetchall()
-
-    players = [x[0].encode("utf-8") for x in temp]
     
-    lines = [None] * len(players)
-    
-    for player in players:
-        page = page.append(getSimplePlayerLine(player), ignore_index = True)
-        
+    page = pd.DataFrame(temp, columns = colNames)
+     
     conn.close()    
         
-    return page
+    return page.round(2)
 
-def getLeaderboard(stat):
+def getLeaderboard(stat, limit):
     conn = sql.connect(db)
     c = conn.cursor()
     
     statQuery = {
         "Coolness" : "SUM(coolness)",
+        "Points" : "SUM(pts)",
+        "Asists" : "SUM(ast)",
+        "Rebounds" : "SUM(trb)",
+        "Offensive Rebounds" : "SUM(orb)",
+        "Defensive Rebounds" : "SUM(drb)",
+        "Steals" : "SUM(stl)",
         "CPG" : "SUM(coolness)/Cast(COUNT(*) as float)",
-        "PPG" : "SUM(pts)/Cast(COUNT(*) as float)"
+        "PPG" : "SUM(pts)/Cast(COUNT(*) as float)",
+        "APG" : "SUM(ast)/Cast(COUNT(*) as float)",
+        "RPG" : "SUM(trb)/Cast(COUNT(*) as float)",
+        "ORPG" : "SUM(orb)/Cast(COUNT(*) as float)",
+        "DRPG" : "SUM(drb)/Cast(COUNT(*) as float)",
+        "SPG" : "SUM(stl)/Cast(COUNT(*) as float)"
     }
+        
+    var = (limit, )
     
     query = ""
     
@@ -200,20 +241,20 @@ def getLeaderboard(stat):
         "INNER JOIN team ON team.id = game_line.team_id ",
         "GROUP BY player_id ",
         "ORDER by stat DESC ",
-        "LIMIT 10;"
+        "LIMIT ?;"
     ]
-    
+        
     for x in queryList: query += x
     
-    c.execute(query)
+    c.execute(query, var)
     
     result = c.fetchall()
     
-    players = [x[0].encode("utf-8") for x in result]
-    teams = [x[1].encode("utf-8") for x in result]
+    players = [x[0] for x in result]
+    teams = [string.capwords(x[1].replace('-',' ')) for x in result]
     stats = [x[2] for x in result]
     
-    board = pd.DataFrame(
+    df = pd.DataFrame(
         {
             'Player': players,
             'Team': teams,
@@ -221,8 +262,10 @@ def getLeaderboard(stat):
         }
     )
     
-    board = board[[u'Player', u'Team', stat]]
+    df = df[[u'Player', u'Team', stat]]
+    
+    df.index = df.index + 1
     
     conn.close()
     
-    return board
+    return df.round(2)
