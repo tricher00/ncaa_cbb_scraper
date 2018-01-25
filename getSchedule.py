@@ -17,8 +17,8 @@ def getGames(date):
     regex = "/cbb/schools/(.*)/"
     for game in games:
         teams = game.find_all('a')
-        homeTag = teams[0]
-        awayTag = teams[1]
+        awayTag = teams[0]
+        homeTag = teams[1]
         try:
             homeLink = homeTag['href'].encode('utf-8')
             search = re.search(regex, homeLink)
