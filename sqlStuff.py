@@ -62,7 +62,6 @@ def getPlayerId(playerName, team = None):
         temp = c.fetchone()    
     
     conn.close()
-    print temp
     return temp[0]
 
 def insertGameLine(line):
@@ -81,7 +80,7 @@ def insertGameLine(line):
     conn.commit()
     conn.close()
     
-def getPlayerLine(playerName, school = None):
+def getPlayerLine(playerName):
     conn = sql.connect(db)
     c = conn.cursor()
 
@@ -134,7 +133,7 @@ def getPlayerLine(playerName, school = None):
     
     return pd.Series(temp, colNames)#.round(2)
     
-def getSimplePlayerLine(playerName, school = None):
+def getSimplePlayerLine(playerName):
     conn = sql.connect(db)
     c = conn.cursor()
     
@@ -169,16 +168,7 @@ def getSimplePlayerLine(playerName, school = None):
     for x in queryList: query += x
     
     c.execute(query, var)
-    temp = c.fetchall()
-        
-    if len(temp) == 1: 
-        temp = temp[0]
-    else:
-        if school == None:
-            schools = [x[1] for x in temp]
-            print "There are multiple players named {} please enter the school name of the player you're looking for:".format(playerName)
-            for y in schools:
-                print "- {}".format(y)
+    temp = c.fetchone()
     
     colNames = ['Player', 'School', 'Games', 'MPG', 'PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TPG', 'FG%', '2P%', '3P%', 'FT%']
     
