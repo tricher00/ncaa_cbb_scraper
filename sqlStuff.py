@@ -284,3 +284,28 @@ def getLeaderboard(stat, limit):
     conn.close()
     
     return df.round(2)
+    
+def getWatchability():
+    conn = sql.connect(db)
+    c = conn.cursor()
+    c.execute("SELECT team.name, team_id, SUM(minutes), SUM(coolness) FROM game_line INNER JOIN team on team_id = team.id GROUP BY team_id")
+    temp = c.fetchall()
+    
+    df = pd.DataFrame(temp, columns=["team", "id", "minutes", "coolness"])
+    
+    watch = []
+    for index, row in df.iterrows():
+        watch.append(float(row.coolness)/row.minutes)
+    
+    normed = [0.0] * len(watch)
+    mean = sum(watch)/len(watch)
+    
+    for i in range(len(watch)):
+        inc = watch[i] - mean
+        normed[i] = inc/mean * 100
+        
+    watchFrame = pd.DataFrame({'Team':df.team.values, 'Watchability':normed})
+    watchFrame = watchFrame.sort_values(by='Watchability', ascending=False)
+    
+    conn.close()
+    return watchFrame
