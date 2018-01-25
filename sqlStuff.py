@@ -23,16 +23,38 @@ def getTeamId(teamName):
     conn.close()
     return temp[0]
     
-def getPlayerId(playerName, teamId):
+def getPlayerId(playerName, team = None):
     conn = sql.connect(db)
     c = conn.cursor()
         
+    if team == None:
+        var = (playerName,)
+        c.execute("SELECT team.name FROM player INNER JOIN team ON player.team_id = team.id WHERE player.name = ? ", var)
+        temp = c.fetchall()
+        if len(temp) > 1:
+            print "There are multiple players with the name {} which one would you like".format(playerName)
+            teams = [x[0] for x in temp]
+            for y in teams:
+                print "- {}".format(y)
+            team = raw_input()
+            team = team.lower()
+            team = team.replace(' ', '-')
+            while team not in teams:
+                print "Please enter a valid team name"
+                team = raw_input()
+                team = team.lower()
+                team = team.replace(' ', '-')
+        elif len(temp) == 1:
+            team = temp[0]
+        else:
+            print "No Player with that name"
+            return
+        
+    teamId = getTeamId(team)
     var = (playerName, teamId)
-    
     c.execute("SELECT id FROM player WHERE name = ? AND team_id = ?", var)
-    
     temp = c.fetchone()
-    
+        
     if temp == None:
         c.execute("INSERT INTO player (name, team_id) VALUES (?,?)", var)
         conn.commit()
@@ -40,6 +62,7 @@ def getPlayerId(playerName, teamId):
         temp = c.fetchone()    
     
     conn.close()
+    print temp
     return temp[0]
 
 def insertGameLine(line):
@@ -64,7 +87,9 @@ def getPlayerLine(playerName, school = None):
 
     playerName = string.capwords(playerName)
     
-    var = (playerName,)
+    playerId = getPlayerId(playerName)
+    
+    var = (playerId,)
     
     queryList = [
         "SELECT player.name as Player, ",
@@ -92,7 +117,7 @@ def getPlayerLine(playerName, school = None):
         "SUM(coolness) as Coolness ",
         "FROM game_line ",
         "INNER JOIN team ON team.id = game_line.team_id ",
-        "INNER JOIN player ON player.id = game_line.player_id WHERE player.name = ?;",
+        "INNER JOIN player ON player.id = game_line.player_id WHERE player.id = ?;",
         
     ]
     
@@ -107,15 +132,17 @@ def getPlayerLine(playerName, school = None):
     
     conn.close()
     
-    return pd.Series(temp, colNames).round(2)
+    return pd.Series(temp, colNames)#.round(2)
     
 def getSimplePlayerLine(playerName, school = None):
     conn = sql.connect(db)
     c = conn.cursor()
     
     playerName = string.capwords(playerName)
+    
+    playerId = getPlayerId(playerName)
 
-    var = (playerName,)
+    var = (playerId,)
     
     queryList = [
         "SELECT player.name as Player, ",
@@ -134,7 +161,7 @@ def getSimplePlayerLine(playerName, school = None):
         "SUM(ft_made) / CAST(SUM(ft_attempt) as float) as 'FT%' ",
         "FROM game_line ",
         "INNER JOIN team ON team.id = player.team_id ",
-        "INNER JOIN player ON player.id = game_line.player_id  WHERE player.name = ?;"
+        "INNER JOIN player ON player.id = game_line.player_id  WHERE player.id = ?;"
     ]
     
     query = ""
@@ -143,9 +170,7 @@ def getSimplePlayerLine(playerName, school = None):
     
     c.execute(query, var)
     temp = c.fetchall()
-    
-    print temp
-    
+        
     if len(temp) == 1: 
         temp = temp[0]
     else:
