@@ -36,6 +36,11 @@ def incrementDate(date):
     if len(month) == 1:
         month = '0' + month
     return year + '-' + month + '-' + day
+    
+def print_full(x):
+    pd.set_option('display.max_rows', len(x))
+    print(x)
+    pd.reset_option('display.max_rows')
 
 def updateDb():
     sm = raw_input("Would you like to insert games for a (s)ingle day or (m)ultiple days? (s/m): ")
@@ -75,13 +80,21 @@ def schedule():
     for game in games:
         away = string.capwords(game.away.name.replace('-',' '))
         home = string.capwords(game.home.name.replace('-',' '))
-        x = (float(watch[watch.Team == game.away.name].Watchability) + float(watch[watch.Team == game.home.name].Watchability))/2
+        if game.away.name in watch.Team.values:
+            awayWatch = float(watch[watch.Team == game.away.name].Watchability)
+        else: 
+            awayWatch = 0
+        if game.home.name in watch.Team.values:
+            homeWatch = float(watch[watch.Team == game.home.name].Watchability)
+        else:
+            homeWatch = 0
+        x = (awayWatch + homeWatch)/2
         df = df.append({"Away":away, "Home":home, "Watchability":x}, ignore_index=True)
     
     df = df.sort_values(by="Watchability", ascending=False).reset_index(drop=True).round()
     ints = [int(x) for x in df.Watchability.values]
     df.Watchability = ints
-    print df
+    print_full(df)
     
 def getPlayer():
     player = raw_input("Player Name: ")
