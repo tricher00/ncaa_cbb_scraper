@@ -42,6 +42,15 @@ def print_full(x):
     print(x)
     pd.reset_option('display.max_rows')
 
+def isDateLessThan(date, compare):
+    year, month, day = [int(x) for x in date.split('-')]
+    comYear, comMonth, comDay = [int(x) for x in compare.split('-')]
+
+    if year < comYear: return True
+    elif month < comMonth: return True
+    elif day < comDay: return True
+    else: return False
+
 def updateDb():
     sm = raw_input("Would you like to insert games for a (s)ingle day or (m)ultiple days? (s/m): ")
     
@@ -52,13 +61,15 @@ def updateDb():
         currYear, currMonth, currDay = start.split('-')
         endYear, endMonth, endDay = end.split('-')
         date = start
-        while int(currYear) <= int(endYear) and int(currMonth) <= int(endMonth) and int(currDay) <= int(endDay):
+        blah = isDateLessThan(start, end)
+        while blah:#int(currYear) <= int(endYear) or int(currMonth) <= int(endMonth) or int(currDay) <= int(endDay):
             games = getGames(date)
             for game in games:
                 game = processGame(game, date)
             for game in games:
                 insertToDb(game)
             date = incrementDate(date)
+            blah = isDateLessThan(date, end)
             currYear, currMonth, currDay = date.split('-')
     elif sm == 's':
         date = raw_input("Date (YYYY-MM-DD): ")
