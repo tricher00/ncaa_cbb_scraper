@@ -48,10 +48,11 @@ def isDateLessThan(date, compare):
 
     if year < comYear: return True
     elif month < comMonth: return True
-    elif day < comDay: return True
+    elif day <= comDay: return True
     else: return False
 
 def updateDb():
+    print "The database has been updated through {}".format(getMaxDate())
     sm = raw_input("Would you like to insert games for a (s)ingle day or (m)ultiple days? (s/m): ")
     
     if sm == 'm':
@@ -61,15 +62,15 @@ def updateDb():
         currYear, currMonth, currDay = start.split('-')
         endYear, endMonth, endDay = end.split('-')
         date = start
-        blah = isDateLessThan(start, end)
-        while blah:#int(currYear) <= int(endYear) or int(currMonth) <= int(endMonth) or int(currDay) <= int(endDay):
+        isLessThan = isDateLessThan(start, end)
+        while isLessThan:
             games = getGames(date)
             for game in games:
                 game = processGame(game, date)
             for game in games:
                 insertToDb(game)
             date = incrementDate(date)
-            blah = isDateLessThan(date, end)
+            isLessThan = isDateLessThan(date, end)
             currYear, currMonth, currDay = date.split('-')
     elif sm == 's':
         date = raw_input("Date (YYYY-MM-DD): ")
@@ -129,6 +130,11 @@ def leaderboard():
     limit = raw_input("How many players would you like to see?: ")
     print getLeaderboard(stat, limit)
 
+def getAllStats():
+    df = getAllPlayerLines()
+    date = getMaxDate()
+    df.to_csv("full_stats_{}.csv".format(date))
+
 def main():
     print "What would like to do?"
     print "U: Update Database"
@@ -136,6 +142,7 @@ def main():
     print "P: Get Player Line"
     print "T: Get Team Page"
     print "L: Get Leaderboard"
+    print "C: Get CSV of all stats"
     
     var = raw_input()
     
@@ -146,6 +153,7 @@ def main():
     elif var == 'P' : getPlayer()
     elif var == 'T' : getTeam()
     elif var == 'L' : leaderboard()
+    elif var == 'C' : getAllStats()
     else: print "Please enter a valid input"
             
 if __name__ == "__main__": main()    
