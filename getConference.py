@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 import re
 
-def main():
+def getConfs():
     url = "https://www.sports-reference.com/cbb/conferences/"
     page = requests.get(url)
     bs = BeautifulSoup(page.content, 'html.parser')
@@ -12,26 +12,30 @@ def main():
     rows = tbl.find_all("tr") 
     rows = rows[1:len(rows)]
     
+    confAbbrv = {}
+
     regex = "/cbb/conferences/(.*)/\""
-    conf = []
-    abbrv = []
+
     for x in rows:
         a = x.find('a')
-        conf.append(a.get_text())
-        abbrv.append(re.search(regex,str(a)).group(1))
+        conf = a.get_text()
+        abbrv = re.search(regex,str(a)).group(1)
+        confAbbrv[conf] = abbrv
 
     confDict = {}
+    nameRegex = "/cbb/schools/(.*)/"
 
-    for i in range(len(conf)):
-        print conf[i]
-        confDict[conf[i]] = []
-        confUrl = url + "/{}/2018.html".format(abbrv[i])
+    confs = confAbbrv.keys()
+
+    for conf in confs:
+        confDict[conf] = []
+        confUrl = url + "/{}/2018.html".format(confAbbrv[conf])
         confPage = requests.get(confUrl)
         confBs = BeautifulSoup(confPage.content, 'html.parser')
         teams = confBs.findAll('td', {"data-stat":"school_name"})
         for team in teams:
-            confDict[conf[i]].append(team.get_text())
+            teamLink = team.find('a')['href'].encode('utf-8')
+            name = re.search(nameRegex, teamLink).group(1)
+            confDict[conf].append(name)
 
-    print confDict
-        
-if __name__ == "__main__": main()
+    return [confDict, confAbbrv]

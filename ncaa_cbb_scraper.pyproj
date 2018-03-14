@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{1f644dd1-6d22-490c-a272-3b2f5bf5a393}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>getConference.py</StartupFile>
+    <StartupFile>main.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -25,6 +25,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="boxscoreParse.py" />
+    <Compile Include="createDb.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="fixConferences.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="getConference.py" />
     <Compile Include="getSchedule.py" />
     <Compile Include="main.py" />

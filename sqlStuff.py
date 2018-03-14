@@ -2,6 +2,8 @@
 import sqlite3 as sql
 import pandas as pd
 import string
+from Objects import Game
+from getConference import getConfs
 
 #db = "dbname='Test' user='postgres' host='localhost' password=''"
 db = "cbb_17_18.db"
@@ -17,12 +19,24 @@ def getTeamId(teamName):
     temp = c.fetchone()
     
     if temp == None:
-        c.execute("INSERT INTO team (name) VALUES (?)", var)
+        c.execute("INSERT INTO team (name, conference) VALUES (?,'none')", var)
         c.execute("SELECT id FROM team WHERE name = ?", var)
         temp = c.fetchone()
         conn.commit()
     
     conn.close()
+    return temp[0]
+
+def getTeamConf(teamId):
+    conn = sql.connect(db)
+    c = conn.cursor()
+
+    var = (teamId,)
+    
+    c.execute("SELECT conference FROM team WHERE id = ?", var)
+    temp = c.fetchone()
+    conn.commit()
+
     return temp[0]
     
 def getPlayerId(playerName, team = None):
@@ -67,7 +81,7 @@ def getPlayerId(playerName, team = None):
     conn.close()
     return temp[0]
 
-def insertGameLine(line):
+def insertGameLine(line, gameId):
     conn = sql.connect(db)
     c = conn.cursor()
     
@@ -77,10 +91,91 @@ def insertGameLine(line):
     opponentId = getTeamId(opponent)
     playerId = getPlayerId(player, team)
     
-    var = (date, playerId, teamId, opponentId, location, mins, fg_made, fg_attempt, two_made, two_attempt, three_made, three_attempt, ft_made, ft_attempt, orb, drb, trb, ast, stl, blk, tov, pf, pts, coolness)
+    var = (gameId, date, playerId, teamId, opponentId, location, mins, fg_made, fg_attempt, two_made, two_attempt, three_made, three_attempt, ft_made, ft_attempt, orb, drb, trb, ast, stl, blk, tov, pf, pts, coolness)
     
-    c.execute("INSERT INTO game_line (date, player_id, team_id, opponent_id, location, minutes, fg_made, fg_attempt, two_made, two_attempt, three_made, three_attempt, ft_made, ft_attempt, orb, drb, trb, ast, stl, blk, tov, pf, pts, coolness) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", var)
+    c.execute("INSERT INTO game_line (game_id, date, player_id, team_id, opponent_id, location, minutes, fg_made, fg_attempt, two_made, two_attempt, three_made, three_attempt, ft_made, ft_attempt, orb, drb, trb, ast, stl, blk, tov, pf, pts, coolness) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", var)
     conn.commit()
+    conn.close()
+
+def insertGame(game):
+    conn = sql.connect(db)
+    c = conn.cursor()
+
+    isConf = 0
+    date = game.date
+
+    homeId = getTeamId(game.home.name)
+    homeScore = game.homeScore
+    homeConf = getTeamConf(homeId)
+
+    awayId = getTeamId(game.away.name)
+    awayScore = game.awayScore
+    awayConf = getTeamConf(awayId)
+
+    if homeConf == awayConf: isConf = 1
+
+    var = (isConf, date, homeId, awayId, homeScore, awayScore)
+
+    c.execute("INSERT INTO game (conf_game, date, home_id, away_id, home_score, away_score) VALUES (?,?,?,?,?,?)", var)
+    conn.commit()
+
+    var = (date, homeId, awayId)
+
+    c.execute("SELECT id FROM game WHERE date = ? AND home_id = ? AND away_id = ?", var)
+    temp = c.fetchone()
+
+    conn.close()
+
+    if homeScore > awayScore:
+        updateWinner(homeId, isConf)
+        updateLoser(awayId, isConf)
+    else:
+        updateWinner(awayId, isConf)
+        updateLoser(homeId, isConf)
+
+    return temp[0]
+
+def updateWinner(teamId, isConf):
+    conn = sql.connect(db)
+    c = conn.cursor()
+
+    var = (teamId,)
+
+    c.execute("UPDATE team SET wins = wins + 1 WHERE id = ?", var)
+
+    if isConf:
+        c.execute("UPDATE team SET conf_wins = conf_wins + 1 WHERE id = ?", var)
+    conn.commit()
+    conn.close()
+
+def updateLoser(teamId, isConf):
+    conn = sql.connect(db)
+    c = conn.cursor()
+
+    var = (teamId,)
+
+    c.execute("UPDATE team SET losses = losses + 1 WHERE id = ?", var)
+
+    if isConf:
+        c.execute("UPDATE team SET conf_losses = conf_losses + 1 WHERE id = ?", var)
+    conn.commit()
+    conn.close()
+
+def insertConfs():
+    conn = sql.connect(db)
+    c = conn.cursor()
+    c.execute("INSERT INTO conference (abbrv, name) VALUES ('none','Non-Divison 1 Teams')")
+    confDict, confAbbrv = getConfs()
+    confs = confDict.keys()
+    for conf in confs:
+        confVar = (confAbbrv[conf], conf)
+        c.execute("INSERT INTO conference (abbrv, name) VALUES (?,?)", confVar)
+        teamList = confDict[conf]
+        for team in teamList:
+            teamVar = (confAbbrv[conf], team)
+            c.execute("INSERT INTO team (conference, name, wins, losses, conf_wins, conf_losses) VALUES (?,?,0,0,0,0)", teamVar)
+    
+    conn.commit()        
     conn.close()
     
 def getPlayerLine(playerName):
@@ -365,4 +460,6 @@ def getMaxDate():
     conn = sql.connect(db)
     c = conn.cursor()
     c.execute("SELECT max(date) FROM game_line;")
-    return c.fetchone()[0].encode("utf-8")
+    date = c.fetchone()[0]
+    if date == None: return "The database is empty"
+    else: return date.encode("utf-8")

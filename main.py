@@ -64,6 +64,7 @@ def updateDb():
         date = start
         isLessThan = isDateLessThan(start, end)
         while isLessThan:
+            print date
             games = getGames(date)
             for game in games:
                 game = processGame(game, date)

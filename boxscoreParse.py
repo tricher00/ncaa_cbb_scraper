@@ -44,13 +44,13 @@ def getGames(date):
         if '--' in loser.name: loser.name = loser.name.replace('--', '-')
         if len(winnerTag) > 1:
             link = "https://www.sports-reference.com" + winnerTag[1]['href'].encode('utf-8')
-            home = winner
-            away = loser
-        else:
-            link = "https://www.sports-reference.com" + loserTag[1]['href'].encode('utf-8')
             home = loser
             away = winner
-        obj = Game(home,away)
+        else:
+            link = "https://www.sports-reference.com" + loserTag[1]['href'].encode('utf-8')
+            home = winner
+            away = loser
+        obj = Game(date, home, away)
         obj.link = link
         allObjects.append(obj)
     return allObjects
@@ -59,6 +59,10 @@ def getBox(html, game, date):
     log = open("log.txt", "w")
     colHeads = []
     teams = [game.home, game.away]
+
+    scores = html.find_all('div',  {"class":"score"})
+    game.awayScore = int(scores[0].get_text())
+    game.homeScore = int(scores[1].get_text())
     
     for team in teams:
         test = html.find('table', id='box-score-basic-' + team.name)
@@ -197,6 +201,9 @@ def processGame(game, date):
     
 def insertToDb(game):
     print "Inserting " + game.away.name + " vs. " + game.home.name
+
+    gameId = insertGame(game)
+
     homeLines = []
     awayLines = []
     try: homeLines = game.home.box.values.tolist()
@@ -207,7 +214,7 @@ def insertToDb(game):
     lines = homeLines + awayLines
     
     for line in lines:
-        insertGameLine(line)
+        insertGameLine(line, gameId)
         
 def incrementDate(date):
     year, month, day = date.split('-')
