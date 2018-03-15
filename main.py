@@ -136,6 +136,60 @@ def getAllStats():
     date = getMaxDate()
     df.to_csv("full_stats_{}.csv".format(date))
 
+def getMatchup():
+    team1 = raw_input("Enter the first team name: ")
+    team2 = raw_input("Enter the second team name: ")
+
+    team1Dict = getMatchupInfo(team1)
+    team2Dict = getMatchupInfo(team2)
+
+    data = []
+    data.append([string.capwords(team1), "School Name", string.capwords(team2)])
+    data.append(["{}: {}".format(team1Dict['top1'][0], team1Dict['top1'][1]), "Top Player 1", "{}: {}".format(team2Dict['top1'][0], team2Dict['top1'][1])])
+    data.append(["{}: {}".format(team1Dict['top2'][0], team1Dict['top2'][1]), "Top Player 2", "{}: {}".format(team2Dict['top2'][0], team2Dict['top2'][1])])
+    data.append(["{}: {}".format(team1Dict['top3'][0], team1Dict['top3'][1]), "Top Player 3", "{}: {}".format(team2Dict['top3'][0], team2Dict['top3'][1])])
+    data.append(["{}: {}".format(team1Dict['topPpg'][0], team1Dict['topPpg'][1]), "Top Scorer", "{}: {}".format(team2Dict['topPpg'][0], team2Dict['topPpg'][1])])
+    data.append(["{}: {}".format(team1Dict['topReb'][0], team1Dict['topReb'][1]), "Top Rebounder", "{}: {}".format(team2Dict['topReb'][0], team2Dict['topReb'][1])])
+    data.append([format(team1Dict['fgPer'], '.3f'), "FG%", format(team2Dict['fgPer'], '.3f')])
+    data.append([format(team1Dict['twoPer'], '.3f'), "2P%", format(team2Dict['twoPer'], '.3f')])
+    data.append([format(team1Dict['threePer'], '.3f'), "3P%", format(team2Dict['threePer'], '.3f')])
+    data.append([format(team1Dict['ftPer'], '.3f'), "FT%", format(team2Dict['ftPer'], '.3f')])
+
+    df = pd.DataFrame(data)
+    print(df.to_string(header=False, index=False, col_space=20))
+    
+def getMatchupInfo(team):
+    teamPage = getTeamPage(team)
+
+    teamDict = {}
+    topPlayers = teamPage.sort_values(by=['CPG'], ascending = False).head(3).reset_index()
+    
+    teamDict['top1'] = (topPlayers.iloc[0]['Player'], topPlayers.iloc[0]['CPG'])
+    teamDict['top2'] = (topPlayers.iloc[1]['Player'], topPlayers.iloc[1]['CPG'])
+    teamDict['top3'] = (topPlayers.iloc[2]['Player'], topPlayers.iloc[2]['CPG'])
+
+    topPpg = teamPage.sort_values(by=['PPG'], ascending = False).head(1).reset_index()
+    teamDict['topPpg'] = (topPpg.iloc[0]['Player'], topPpg.iloc[0]['PPG'])
+
+    topReb = teamPage.sort_values(by=['RPG'], ascending = False).head(1).reset_index()
+    teamDict['topReb'] = (topReb['Player'].iloc[0], topReb['RPG'].iloc[0])
+
+    fga = float(teamPage['FGA'].values.sum())
+    fgm = float(teamPage['FGM'].values.sum())
+    twopa = float(teamPage['2PA'].values.sum())
+    twopm = float(teamPage['2PM'].values.sum())
+    threepa = float(teamPage['3PA'].values.sum())
+    threepm = float(teamPage['3PM'].values.sum())
+    fta = float(teamPage['FTA'].values.sum())
+    ftm = float(teamPage['FTM'].values.sum())
+
+    teamDict['fgPer'] = fgm/fga
+    teamDict['twoPer'] = twopm/twopa
+    teamDict['threePer'] = threepm/threepa
+    teamDict['ftPer'] = ftm/fta
+
+    return teamDict
+
 def main():
     print "What would like to do?"
     print "U: Update Database"
@@ -143,6 +197,7 @@ def main():
     print "P: Get Player Line"
     print "T: Get Team Page"
     print "L: Get Leaderboard"
+    print "M: Get Matchup"
     print "C: Get CSV of all stats"
     
     var = raw_input()
@@ -154,6 +209,7 @@ def main():
     elif var == 'P' : getPlayer()
     elif var == 'T' : getTeam()
     elif var == 'L' : leaderboard()
+    elif var == 'M' : getMatchup()
     elif var == 'C' : getAllStats()
     else: print "Please enter a valid input"
             

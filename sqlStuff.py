@@ -330,7 +330,7 @@ def getTeamPage(teamName):
     teamName = teamName.lower()
     teamName = teamName.replace(' ', '-')
     
-    colNames = ['Player', 'Games', 'MPG', 'PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TPG', 'FG%', '2P%', '3P%', 'FT%']
+    colNames = ['Player', 'Games', 'MPG', 'PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TPG', 'CPG', 'FG%', '2P%', '3P%', 'FT%', 'FGA', 'FGM', '2PA', '2PM', '3PA', '3PM', 'FTA', 'FTM']
     
     var = (teamName, )
     
@@ -344,10 +344,19 @@ def getTeamPage(teamName):
         "SUM(stl) / CAST(Count(*) as float) as SPG, ",
         "SUM(blk) / CAST(Count(*) as float) as BPG, ",
         "SUM(tov) / CAST(Count(*) as float) as TPG, ",
+        "SUM(coolness) / CAST(Count(*) as float) as CPG, "
         "SUM(fg_made) / CAST(SUM(fg_attempt) as float) as 'FG%', ",
         "SUM(two_made) / CAST(SUM(two_attempt) as float) as '2P%', ",
         "SUM(three_made) / CAST(SUM(three_attempt) as float) as '3P%', ",
-        "SUM(ft_made) / CAST(SUM(ft_attempt) as float) as 'FT%' ",
+        "SUM(ft_made) / CAST(SUM(ft_attempt) as float) as 'FT%', ",
+        "SUM(fg_attempt), ",
+        "SUM(fg_made), ",
+        "SUM(two_attempt), ",
+        "SUM(two_made), ",
+        "SUM(three_attempt), ",
+        "SUM(three_made), ",
+        "SUM(ft_attempt), ",
+        "SUM(ft_made) ",
         "FROM game_line ",
         "INNER JOIN team ON team.id = player.team_id ",
         "INNER JOIN player ON player.id = game_line.player_id WHERE team.name = ? "
