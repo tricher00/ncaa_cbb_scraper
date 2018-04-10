@@ -235,7 +235,8 @@ def getAllPlayerLines():
     c = conn.cursor()
     
     queryList = [
-        "SELECT player.name as Player, ",
+        "SELECT player.id as Id, ",
+        "player.name as Player, ",
         "team.name as School, "
         "CAST(Count(*) as float) as Games, ",
         "SUM(minutes) / CAST(Count(*) as float) as MPG, ",
@@ -252,6 +253,7 @@ def getAllPlayerLines():
         "SUM(two_made) / CAST(SUM(two_attempt) as float) as '2P%', ",
         "SUM(three_made) / CAST(SUM(three_attempt) as float) as '3P%', ",
         "SUM(ft_made) / CAST(SUM(ft_attempt) as float) as 'FT%', ",
+        "SUM(pts) / (2 * (CAST(SUM(fg_attempt) as float) + (.44 * SUM(ft_attempt)))) as 'TS%', ",
         "SUM(pts) as Points, ",
         "SUM(ast) as Asists, ",
         "SUM(orb) as ORB, ",
@@ -271,12 +273,44 @@ def getAllPlayerLines():
     c.execute(query)
     temp = c.fetchall()
     
-    colNames = ['Player', 'School', 'Games', 'MPG', 'PPG', 'APG', 'ORPG', 'DRPG', 'RPG', 'SPG', 'BPG', 'TPG', 'CPG', 'FG%', '2P%', '3P%', 'FT%', 'Points', 'Asists', 'ORB', 'DRB', 'TRB', 'Coolness']
+    colNames = ['Id', 'Player', 'School', 'Games', 'MPG', 'PPG', 'APG', 'ORPG', 'DRPG', 'RPG', 'SPG', 'BPG', 'TPG', 'CPG', 'FG%', '2P%', '3P%', 'FT%', 'TS%', 'Points', 'Asists', 'ORB', 'DRB', 'TRB', 'Coolness']
     df = pd.DataFrame(temp)
     df.columns = colNames
     conn.close()
+    players = df['Id'].tolist()
+    sos = []
+    for player in players:
+        print player
+        sos.append(getSOS(player))
+    df['SOS'] = sos
     return df
     #return pd.DataFrame(temp, colNames)#.round(2)
+
+def getSOS(playerId):
+    conn = sql.connect(db)
+    c = conn.cursor()
+
+    var = (playerId,)
+
+    query = "SELECT opponent_id FROM game_line WHERE player_id = (?);"
+
+    c.execute(query, var)
+    temp = c.fetchall()
+
+    oppIds = [x[0] for x in temp]
+
+    sumSos = 0
+    for id in oppIds:
+        newVar = (id,)
+        newQuery = "SELECT wins/CAST((wins + losses) AS float)  FROM team WHERE id = (?);"
+        c.execute(newQuery, newVar)
+        sos = c.fetchone()[0]
+        try:
+            sumSos += sos
+        except:
+            continue
+
+    return float(sumSos/len(oppIds))
     
 def getSimplePlayerLine(playerName):
     conn = sql.connect(db)

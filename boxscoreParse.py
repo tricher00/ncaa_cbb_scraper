@@ -88,7 +88,8 @@ def getBox(html, game, date):
         for percent in ['FG%', '2P%', '3P%', 'FT%']: colHeads.remove(percent)
         df = pd.DataFrame(columns=colHeads)   
         rows = test.select("tbody tr")
-        rows.remove(rows[5])
+        if len(rows) > 5:
+            rows.remove(rows[5])
         for row in rows:
             name = row.select("th")[0].get_text().encode('utf-8')
             line = [datetime.datetime.strptime(date, "%Y-%m-%d").date(), team.name , opponent, location, name]
@@ -96,8 +97,11 @@ def getBox(html, game, date):
             for x in data:
                 if not '_pct' in x['data-stat']:
                     line.append(x.get_text().encode("utf-8"))
-            coolness = getCoolness(line)
-            line.append(coolness)
+            try:
+                coolness = getCoolness(line)
+                line.append(coolness)
+            except:
+                line.append(0)
             series = pd.Series(line,colHeads)
             df = df.append([series], ignore_index=True)
         team.box = df

@@ -2,7 +2,7 @@ import sqlite3 as sql
 from sqlStuff import insertConfs
 
 def main():
-    db = "cbb_17_18.db"
+    db = "cbb_11_12.db"
 
     conn = sql.connect(db)
     c = conn.cursor()

@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2027
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "ncaa_cbb_scraper", "ncaa_cbb_scraper.pyproj", "{1F644DD1-6D22-490C-A272-3B2F5BF5A393}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1F644DD1-6D22-490C-A272-3B2F5BF5A393}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F644DD1-6D22-490C-A272-3B2F5BF5A393}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EC05D4F1-A24B-43F3-876B-DB3FB6CBD918}
+	EndGlobalSection
+EndGlobal

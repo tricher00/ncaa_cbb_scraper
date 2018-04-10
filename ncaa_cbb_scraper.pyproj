@@ -34,6 +34,12 @@
     <Compile Include="getConference.py" />
     <Compile Include="getSchedule.py" />
     <Compile Include="main.py" />
+    <Compile Include="getRookies.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="module1.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Objects.py" />
     <Compile Include="sqlStuff.py" />
   </ItemGroup>

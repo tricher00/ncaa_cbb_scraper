@@ -7,6 +7,8 @@ def getConfs():
     page = requests.get(url)
     bs = BeautifulSoup(page.content, 'html.parser')
 
+    year = "2011"
+
     tbl = bs.find('div', {"id":"all_active"})
     
     rows = tbl.find_all("tr") 
@@ -28,8 +30,10 @@ def getConfs():
     confs = confAbbrv.keys()
 
     for conf in confs:
+        if conf == "American Athletic Conference" and year < 2014:
+            continue
         confDict[conf] = []
-        confUrl = url + "/{}/2018.html".format(confAbbrv[conf])
+        confUrl = url + "/{}/{}.html".format(confAbbrv[conf],year)
         confPage = requests.get(confUrl)
         confBs = BeautifulSoup(confPage.content, 'html.parser')
         teams = confBs.findAll('td', {"data-stat":"school_name"})
