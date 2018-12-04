@@ -6,7 +6,7 @@ from Objects import Game
 from getConference import getConfs
 
 #db = "dbname='Test' user='postgres' host='localhost' password=''"
-db = "cbb_17_18.db"
+db = "cbb_18_19.db"
 
 def getTeamId(teamName):
     conn = sql.connect(db)
@@ -73,25 +73,42 @@ def getPlayerId(playerName, team = None):
     temp = c.fetchone()
         
     if temp == None:
-        c.execute("INSERT INTO player (name, team_id) VALUES (?,?)", var)
+        print "No Player with that name"
+        """c.execute("INSERT INTO player (name, team_id) VALUES (?,?)", var)
         conn.commit()
         c.execute("SELECT id FROM player WHERE name = ? AND team_id = ? COLLATE NOCASE", var)
         temp = c.fetchone()    
-    
+        """
     conn.close()
     return temp[0]
+
+def insertPlayer(id, player, teamId):
+    conn = sql.connect(db)
+    conn.text_factory = str
+    c = conn.cursor()
+    var = (id,)
+    c.execute("SELECT * FROM player WHERE id = ?", var)
+    temp = c.fetchone()
+
+    if temp == None:
+        var = (id, player, teamId)
+        c.execute("INSERT INTO player (id, name, team_id) VALUES (?,?,?)", var)
+        conn.commit()
+
+    conn.close()
 
 def insertGameLine(line, gameId):
     conn = sql.connect(db)
     c = conn.cursor()
     
-    date, team, opponent, location, player, mins, fg_made, fg_attempt, two_made, two_attempt, three_made, three_attempt, ft_made, ft_attempt, orb, drb, trb, ast, stl, blk, tov, pf, pts, coolness = line
+    date, team, opponent, location, player, id, mins, fg_made, fg_attempt, two_made, two_attempt, three_made, three_attempt, ft_made, ft_attempt, orb, drb, trb, ast, stl, blk, tov, pf, pts, coolness = line
     
     teamId = getTeamId(team)
     opponentId = getTeamId(opponent)
-    playerId = getPlayerId(player, team)
+    # playerId = getPlayerId(player, team)
+    insertPlayer(id, player, teamId)
     
-    var = (gameId, date, playerId, teamId, opponentId, location, mins, fg_made, fg_attempt, two_made, two_attempt, three_made, three_attempt, ft_made, ft_attempt, orb, drb, trb, ast, stl, blk, tov, pf, pts, coolness)
+    var = (gameId, date, id, teamId, opponentId, location, mins, fg_made, fg_attempt, two_made, two_attempt, three_made, three_attempt, ft_made, ft_attempt, orb, drb, trb, ast, stl, blk, tov, pf, pts, coolness)
     
     c.execute("INSERT INTO game_line (game_id, date, player_id, team_id, opponent_id, location, minutes, fg_made, fg_attempt, two_made, two_attempt, three_made, three_attempt, ft_made, ft_attempt, orb, drb, trb, ast, stl, blk, tov, pf, pts, coolness) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", var)
     conn.commit()
@@ -439,7 +456,7 @@ def getLeaderboard(stat, limit):
     queryList = [
         "SELECT player.name as Player, ",
         "team.name as Team, "
-        "CASE WHEN CAST(Count(*) as float) >= 10 THEN {} END as stat ".format(statQuery[stat]),
+        "CASE WHEN CAST(Count(*) as float) >= 5 THEN {} END as stat ".format(statQuery[stat]),
         "FROM game_line ",
         "INNER JOIN player ON player.id = game_line.player_id ",
         "INNER JOIN team ON team.id = game_line.team_id ",
@@ -484,7 +501,10 @@ def getWatchability():
     
     watch = []
     for index, row in df.iterrows():
-        watch.append(float(row.coolness)/row.minutes)
+        if row.coolness == 0 or row.minutes == 0:
+            watch.append(0)
+        else:
+            watch.append(float(row.coolness)/row.minutes)
     
     normed = [0.0] * len(watch)
     mean = sum(watch)/len(watch)

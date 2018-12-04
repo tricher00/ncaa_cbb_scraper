@@ -80,10 +80,10 @@ def getBox(html, game, date):
         
         headers = test.select("thead th")
         headers = headers[2:]
-        colHeads = ['Date', 'Team', 'Opponent', 'Location']
+        colHeads = ['Date', 'Team', 'Opponent', 'Location', 'id']
         for h in headers: colHeads.append(h.get_text())
         colHeads = [h.encode("utf-8") for h in colHeads]
-        colHeads[4] = 'Name'
+        colHeads[5] = 'Name'
         colHeads.append('Coolness')
         for percent in ['FG%', '2P%', '3P%', 'FT%']: colHeads.remove(percent)
         df = pd.DataFrame(columns=colHeads)   
@@ -91,8 +91,13 @@ def getBox(html, game, date):
         if len(rows) > 5:
             rows.remove(rows[5])
         for row in rows:
-            name = row.select("th")[0].get_text().encode('utf-8')
-            line = [datetime.datetime.strptime(date, "%Y-%m-%d").date(), team.name , opponent, location, name]
+            name = row.select("th")[0].get_text().encode('utf-8') 
+            playerLink = row.select("th")[0].select_one("a")
+            if playerLink is None:
+                id = name.replace(" ", "-") + "-1"
+            else:
+                id = row.select("th")[0].select_one("a")['href'].encode('utf-8').replace("/cbb/players/", "").replace(".html", "")
+            line = [datetime.datetime.strptime(date, "%Y-%m-%d").date(), team.name , opponent, location, name, id]
             data = row.select('td')
             for x in data:
                 if not '_pct' in x['data-stat']:
@@ -109,24 +114,24 @@ def getBox(html, game, date):
     return game
     
 def getCoolness(line):
-    mins = float(line[5])
-    fg_made = float(line[6])
-    fg_attempt = float(line[7])
-    two_made = float(line[8])
-    two_attempt = float(line[9])
-    three_made = float(line[10])
-    three_attempt = float(line[11])
-    ft_made = float(line[12])
-    ft_attempt = float(line[13])
-    orb = float(line[14])
-    drb = float(line[15])
-    trb = float(line[16])
-    ast = float(line[17])
-    stl = float(line[18])
-    blk = float(line[19])
-    tov = float(line[20])
-    pf = float(line[21])
-    pts = float(line[22])
+    mins = float(line[6])
+    fg_made = float(line[7])
+    fg_attempt = float(line[8])
+    two_made = float(line[9])
+    two_attempt = float(line[10])
+    three_made = float(line[11])
+    three_attempt = float(line[12])
+    ft_made = float(line[13])
+    ft_attempt = float(line[14])
+    orb = float(line[15])
+    drb = float(line[16])
+    trb = float(line[17])
+    ast = float(line[18])
+    stl = float(line[19])
+    blk = float(line[20])
+    tov = float(line[21])
+    pf = float(line[22])
+    pts = float(line[23])
     
     coolness = 0
     

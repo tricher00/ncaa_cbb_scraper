@@ -7,7 +7,7 @@ def getConfs():
     page = requests.get(url)
     bs = BeautifulSoup(page.content, 'html.parser')
 
-    year = "2011"
+    year = "2019"
 
     tbl = bs.find('div', {"id":"all_active"})
     

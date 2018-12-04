@@ -38,6 +38,7 @@ def getGames(date):
 
         allObjects.append(
             Game(
+                date,
                 home,
                 away
             )
